@@ -2,7 +2,18 @@
 
 ## 目标
 
-`dmp` 是一个 Docker 镜像下载加速命令行工具。第一版编译后只提供一个二进制文件，不读取配置文件，用户通过类似 `dmp nginx:latest` 或 `dmp ghcr.io/leafney/ai-signin:0.6.8` 的形式拉取镜像。
+项目名称为 `docker-mirror-proxy`，程序名称保持为 `dmp`，含义为 Docker Mirror Proxy。
+
+`dmp` 是一个多类型下载加速命令行工具。第一版编译后只提供一个二进制文件，不读取配置文件，先实现 Docker 镜像拉取加速能力。
+
+Docker 镜像拉取使用二级命令 `pull`：
+
+```bash
+dmp pull nginx:latest
+dmp pull ghcr.io/leafney/ai-signin:0.6.8
+```
+
+不保留 `dmp nginx:latest` 这种兼容快捷命令。
 
 第一版只支持两类镜像：
 
@@ -47,15 +58,24 @@ ghcr.io/leafney/ai-signin:0.6.8
 ```bash
 dmp
 dmp --help
-dmp --version
-dmp --timeout 60 nginx:latest
-dmp nginx:latest
-dmp ghcr.io/leafney/ai-signin:0.6.8
+dmp version
+dmp pull --timeout 60 nginx:latest
+dmp pull nginx:latest
+dmp pull ghcr.io/leafney/ai-signin:0.6.8
+dmp gh
+dmp pip
+dmp npm
 ```
 
 规则：
 
 - `dmp` 不带参数时等同于 `dmp --help`
+- `dmp pull` 是 Docker 镜像拉取加速命令
+- `dmp gh` 预留给 GitHub 加速
+- `dmp pip` 预留给 Python 包加速
+- `dmp npm` 预留给 Node 包加速
+- 第一版中 `gh`、`pip`、`npm` 只输出暂未实现提示
+- 不支持 `dmp nginx:latest` 快捷调用
 - 默认单个镜像地址超时时间为 `60` 秒
 - `--timeout` 支持临时设置超时时间，单位为秒
 - 支持一次传入多个镜像，按顺序逐个处理
@@ -115,6 +135,10 @@ internal/
     app.go
     app_test.go
 
+  cli/
+    root.go
+    root_test.go
+
   docker/
     client.go
 
@@ -140,7 +164,8 @@ README.md
 
 模块职责：
 
-- `cmd/dmp`：程序入口，解析 CLI 参数，设置默认值和退出码。
+- `cmd/dmp`：程序入口，调用 Cobra 命令树，设置退出码。
+- `internal/cli`：基于 Cobra 定义 `pull`、`gh`、`pip`、`npm`、`version` 命令。
 - `internal/image`：解析和校验镜像名称，只放行业务允许的镜像类型。
 - `internal/mirror`：维护内置镜像地址池，生成候选代理镜像。
 - `internal/docker`：封装 `docker pull`、`docker tag`、`docker rmi`。
@@ -162,6 +187,10 @@ README.md
 - 第一个代理地址失败时继续尝试下一个
 - 拉取成功后执行 `docker tag`
 - 默认执行 `docker rmi` 清理临时代理标签
+- `dmp` 无参数显示帮助
+- `dmp pull` 执行 Docker 镜像加速拉取
+- `dmp nginx:latest` 被拒绝
+- `dmp gh`、`dmp pip`、`dmp npm` 返回暂未实现提示
 
 ## GitHub Actions 打包
 
@@ -196,8 +225,9 @@ go test ./...
 go build -o dmp ./cmd/dmp
 ./dmp
 ./dmp --help
-./dmp --timeout 60 nginx:latest
-./dmp ghcr.io/leafney/ai-signin:0.6.8
+./dmp version
+./dmp pull --timeout 60 nginx:latest
+./dmp pull ghcr.io/leafney/ai-signin:0.6.8
 ```
 
 功能验收：
@@ -205,6 +235,9 @@ go build -o dmp ./cmd/dmp
 - 无参数显示帮助
 - 默认超时时间为 60 秒
 - 支持通过 `--timeout` 临时设置超时时间
+- Docker 镜像拉取必须使用 `dmp pull <镜像>`
+- 不兼容 `dmp <镜像>` 直接拉取形式
+- 预留 `gh`、`pip`、`npm` 二级命令
 - 只支持 Docker Hub 官方镜像和 GHCR 镜像
 - 使用统一内置第三方镜像地址池
 - 某个代理地址失败或超时后自动尝试下一个

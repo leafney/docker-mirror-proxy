@@ -8,10 +8,10 @@ import (
 	"os"
 	"time"
 
-	dockerclient "github.com/leafney/docker-mirror-pull/internal/docker"
-	"github.com/leafney/docker-mirror-pull/internal/image"
-	"github.com/leafney/docker-mirror-pull/internal/logx"
-	"github.com/leafney/docker-mirror-pull/internal/mirror"
+	dockerclient "github.com/leafney/docker-mirror-proxy/internal/docker"
+	"github.com/leafney/docker-mirror-proxy/internal/image"
+	"github.com/leafney/docker-mirror-proxy/internal/logx"
+	"github.com/leafney/docker-mirror-proxy/internal/mirror"
 )
 
 type Docker interface {

@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/leafney/docker-mirror-pull/internal/image"
+	"github.com/leafney/docker-mirror-proxy/internal/image"
 )
 
 func TestCandidatesForDockerHubOfficialImage(t *testing.T) {

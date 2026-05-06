@@ -1,6 +1,6 @@
 package mirror
 
-import "github.com/leafney/docker-mirror-pull/internal/image"
+import "github.com/leafney/docker-mirror-proxy/internal/image"
 
 var DefaultRegistries = []string{
 	"docker.1ms.run",

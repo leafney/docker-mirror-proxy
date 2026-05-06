@@ -1,6 +1,6 @@
-# docker-mirror-pull
+# docker-mirror-proxy
 
-`dmp` 是一个 Docker 镜像下载加速命令行工具。
+`dmp` 是一个多类型下载加速命令行工具。第一版先实现 Docker 镜像拉取加速能力，后续预留 GitHub、Python 包、Node 包加速命令。
 
 第一版只支持：
 
@@ -10,9 +10,9 @@
 ## 使用方式
 
 ```bash
-dmp nginx:latest
-dmp ghcr.io/leafney/ai-signin:0.6.8
-dmp --timeout 30 nginx:latest
+dmp pull nginx:latest
+dmp pull ghcr.io/leafney/ai-signin:0.6.8
+dmp pull --timeout 30 nginx:latest
 ```
 
 不带参数时会显示帮助：
@@ -20,6 +20,22 @@ dmp --timeout 30 nginx:latest
 ```bash
 dmp
 dmp --help
+```
+
+第一版不支持以下快捷形式：
+
+```bash
+dmp nginx:latest
+```
+
+## 命令规划
+
+```text
+dmp pull    Docker 镜像拉取加速
+dmp gh      GitHub 加速，暂未实现
+dmp pip     Python 包加速，暂未实现
+dmp npm     Node 包加速，暂未实现
+dmp version 显示版本信息
 ```
 
 ## 工作方式
@@ -51,16 +67,19 @@ ghcr.io/leafney/ai-signin:0.6.8
 
 ## 参数
 
+`pull` 命令支持：
+
 ```text
 --timeout int
     单个加速地址的超时时间，单位为秒，默认 60
 
 --no-clean
     成功后不删除临时加速镜像标签
+```
 
---version
-    显示版本信息
+根命令支持：
 
+```text
 --help
     显示帮助信息
 ```
