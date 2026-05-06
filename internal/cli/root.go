@@ -12,9 +12,12 @@ import (
 )
 
 type Config struct {
-	Version string
-	Out     io.Writer
-	Err     io.Writer
+	Version   string
+	GitBranch string
+	GitCommit string
+	BuildTime string
+	Out       io.Writer
+	Err       io.Writer
 }
 
 func New(cfg Config) *cobra.Command {
@@ -45,7 +48,7 @@ func New(cfg Config) *cobra.Command {
 	root.AddCommand(newReservedCommand("gh", "GitHub 加速"))
 	root.AddCommand(newReservedCommand("pip", "Python 包加速"))
 	root.AddCommand(newReservedCommand("npm", "Node 包加速"))
-	root.AddCommand(newVersionCommand(cfg.Version))
+	root.AddCommand(newVersionCommand(cfg))
 
 	return root
 }
@@ -87,12 +90,15 @@ func newReservedCommand(name, desc string) *cobra.Command {
 	}
 }
 
-func newVersionCommand(version string) *cobra.Command {
+func newVersionCommand(cfg Config) *cobra.Command {
 	return &cobra.Command{
 		Use:   "version",
 		Short: "显示版本信息",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Fprintf(cmd.OutOrStdout(), "dmp %s\n", version)
+			fmt.Fprintf(cmd.OutOrStdout(), "Version: %s\n", cfg.Version)
+			fmt.Fprintf(cmd.OutOrStdout(), "Git Branch: %s\n", cfg.GitBranch)
+			fmt.Fprintf(cmd.OutOrStdout(), "Git Commit: %s\n", cfg.GitCommit)
+			fmt.Fprintf(cmd.OutOrStdout(), "Build Time: %s\n", cfg.BuildTime)
 		},
 	}
 }

@@ -89,13 +89,29 @@ ghcr.io/leafney/ai-signin:0.6.8
 ```bash
 make test
 make build
+make version
 ```
 
 或直接执行：
 
 ```bash
 go test ./...
-go build -o dmp ./cmd/dmp
+go build -ldflags="-X 'main.Version=v0.1.0'" -o dmp ./cmd/dmp
+```
+
+`make build` 会自动注入版本信息：
+
+```text
+Version
+Git Branch
+Git Commit
+Build Time
+```
+
+查看版本：
+
+```bash
+dmp version
 ```
 
 ## 发布构建
