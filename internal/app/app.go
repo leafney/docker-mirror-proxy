@@ -73,7 +73,7 @@ func runOne(ctx context.Context, opts Options, logger logx.Logger, original stri
 		err := opts.Docker.Pull(pullCtx, candidate)
 		cancel()
 		if err != nil {
-			logger.Printf("拉取失败，切换下一个加速地址: %s", candidate)
+			logger.Printf("拉取失败，切换下一个加速地址")
 			pullErrs = append(pullErrs, fmt.Errorf("%s: %w", candidate, err))
 			continue
 		}

@@ -68,6 +68,9 @@ func TestRunTriesNextMirrorAfterPullFailure(t *testing.T) {
 	if !strings.Contains(out.String(), "拉取失败，切换下一个加速地址") {
 		t.Fatalf("log output missing failure switch message: %s", out.String())
 	}
+	if strings.Contains(out.String(), "拉取失败，切换下一个加速地址: docker.1ms.run/nginx:latest") {
+		t.Fatalf("failure switch log should not repeat failed candidate: %s", out.String())
+	}
 }
 
 func TestRunReturnsErrorWhenUnsupportedImageIsProvided(t *testing.T) {
