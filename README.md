@@ -118,7 +118,7 @@ dmp version
 
 GitHub Actions 会在推送 `v*` 标签或手动触发时构建：
 
-- `dmp-linux-amd64`
-- `dmp-linux-arm64`
-- `dmp-darwin-arm64`
+- `dmp-linux-amd64.tar.gz`
+- `dmp-linux-arm64.tar.gz`
+- `dmp-darwin-arm64.tar.gz`
 - `checksums.txt`

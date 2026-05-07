@@ -27,25 +27,36 @@ jobs:
 
       - name: Build
         run: |
-          mkdir -p dist
+          mkdir -p build dist
           VERSION="${GITHUB_REF_NAME}"
           GIT_BRANCH="${GITHUB_REF_NAME}"
           GIT_COMMIT="$(git rev-parse --short HEAD)"
           BUILD_TIME="$(date '+%Y-%m-%d %H:%M:%S')"
           LDFLAGS="-s -w -X 'main.Version=${VERSION}' -X 'main.GitBranch=${GIT_BRANCH}' -X 'main.GitCommit=${GIT_COMMIT}' -X 'main.BuildTime=${BUILD_TIME}'"
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o dist/dmp-linux-amd64 ./cmd/dmp
-          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o dist/dmp-linux-arm64 ./cmd/dmp
-          CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o dist/dmp-darwin-arm64 ./cmd/dmp
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o build/dmp-linux-amd64 ./cmd/dmp
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o build/dmp-linux-arm64 ./cmd/dmp
+          CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o build/dmp-darwin-arm64 ./cmd/dmp
+
+      - name: Package
+        run: |
+          mkdir -p dist
+          for target in linux-amd64 linux-arm64 darwin-arm64; do
+            package="dmp-${target}"
+            mkdir -p "dist/${package}"
+            cp "build/${package}" "dist/${package}/dmp"
+            tar -C dist -czf "dist/${package}.tar.gz" "${package}"
+            rm -rf "dist/${package}"
+          done
 
       - name: Checksums
         run: |
           cd dist
-          sha256sum dmp-* > checksums.txt
+          sha256sum *.tar.gz > checksums.txt
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: dmp-binaries
+          name: dmp-packages
           path: dist/*
 
       - name: Create GitHub release
