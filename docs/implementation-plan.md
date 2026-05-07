@@ -201,6 +201,10 @@ README.md
 - 推送 `v*` tag
 - 手动 `workflow_dispatch`
 
+构建时间：
+
+- `Build Time` 使用东八区时间，即 `Asia/Shanghai`
+
 构建产物：
 
 - `dmp-linux-amd64`

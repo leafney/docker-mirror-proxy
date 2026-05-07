@@ -99,7 +99,7 @@ go test ./...
 go build -ldflags="-X 'main.Version=v0.1.0'" -o dmp ./cmd/dmp
 ```
 
-`make build` 会自动注入版本信息：
+`make build` 会自动注入版本信息，其中 `Build Time` 使用东八区时间：
 
 ```text
 Version

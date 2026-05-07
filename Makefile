@@ -5,7 +5,7 @@ CGO_ENABLED ?= 0
 VERSION ?= $(shell git describe --tags --always 2>/dev/null || git rev-parse --short HEAD 2>/dev/null || echo "dev")
 GIT_BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
 GIT_COMMIT ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
-BUILD_TIME ?= $(shell date +"%Y-%m-%d %H:%M:%S")
+BUILD_TIME ?= $(shell TZ=Asia/Shanghai date +"%Y-%m-%d %H:%M:%S")
 
 LDFLAGS := -s -w \
 	-X 'main.Version=$(VERSION)' \

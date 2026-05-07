@@ -31,7 +31,7 @@ jobs:
           VERSION="${GITHUB_REF_NAME}"
           GIT_BRANCH="${GITHUB_REF_NAME}"
           GIT_COMMIT="$(git rev-parse --short HEAD)"
-          BUILD_TIME="$(date '+%Y-%m-%d %H:%M:%S')"
+          BUILD_TIME="$(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
           LDFLAGS="-s -w -X 'main.Version=${VERSION}' -X 'main.GitBranch=${GIT_BRANCH}' -X 'main.GitCommit=${GIT_COMMIT}' -X 'main.BuildTime=${BUILD_TIME}'"
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o build/dmp-linux-amd64 ./cmd/dmp
           CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o build/dmp-linux-arm64 ./cmd/dmp
