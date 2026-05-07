@@ -42,10 +42,10 @@ jobs:
           mkdir -p dist
           for target in linux-amd64 linux-arm64 darwin-arm64; do
             package="dmp-${target}"
-            mkdir -p "dist/${package}"
-            cp "build/${package}" "dist/${package}/dmp"
-            tar -C dist -czf "dist/${package}.tar.gz" "${package}"
-            rm -rf "dist/${package}"
+            mkdir -p "dist/.tmp-${package}"
+            cp "build/${package}" "dist/.tmp-${package}/${package}"
+            tar -C "dist/.tmp-${package}" -czf "dist/${package}.tar.gz" "${package}"
+            rm -rf "dist/.tmp-${package}"
           done
 
       - name: Checksums
