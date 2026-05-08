@@ -107,7 +107,7 @@ func TestPullCommandSupportsShortTimeoutFlag(t *testing.T) {
 	}
 }
 
-func TestPullCommandSupportsProxyFlag(t *testing.T) {
+func TestPullCommandRejectsProxyFlag(t *testing.T) {
 	var out bytes.Buffer
 	cmd := New(Config{
 		Version: "test",
@@ -120,8 +120,8 @@ func TestPullCommandSupportsProxyFlag(t *testing.T) {
 	if err == nil {
 		t.Fatal("ExecuteContext returned nil error")
 	}
-	if !strings.Contains(err.Error(), "--timeout 必须大于 0") {
-		t.Fatalf("error = %q, want timeout validation", err.Error())
+	if !strings.Contains(err.Error(), "unknown shorthand flag: 'p' in -p") {
+		t.Fatalf("error = %q, want unknown proxy flag", err.Error())
 	}
 }
 

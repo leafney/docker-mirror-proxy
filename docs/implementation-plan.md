@@ -60,7 +60,6 @@ dmp
 dmp --help
 dmp version
 dmp pull --timeout 60 nginx:latest
-dmp pull -t 60 -p http://127.0.0.1:7890 nginx:latest
 dmp pull nginx:latest
 dmp pull ghcr.io/leafney/ai-signin:0.6.8
 dmp gh -t 60 -o /tmp -p http://127.0.0.1:7890 https://github.com/leafney/docker-mirror-proxy/releases/download/v0.0.4/dmp-linux-amd64.tar.gz
@@ -79,7 +78,6 @@ dmp npm
 - 不支持 `dmp nginx:latest` 快捷调用
 - 默认单个镜像地址超时时间为 `60` 秒
 - `-t, --timeout` 支持临时设置超时时间，单位为秒
-- `dmp pull` 支持 `-p, --proxy` 指定代理，代理失败或超时后回退内置加速地址
 - 支持一次传入多个镜像，按顺序逐个处理
 - 某个镜像处理失败后继续处理后续镜像，最后返回非零退出码
 - `dmp gh` 支持 `-t, --timeout` 设置超时时间
@@ -93,8 +91,6 @@ dmp npm
 
 ```text
 解析原始镜像
-  ↓
-如果指定代理，优先通过代理拉取原始镜像
   ↓
 生成候选代理镜像地址
   ↓
@@ -218,7 +214,6 @@ README.md
 - `dmp` 无参数显示帮助
 - `dmp pull` 执行 Docker 镜像加速拉取
 - `dmp pull` 支持 `-t, --timeout` 参数
-- `dmp pull` 支持 `-p, --proxy` 参数
 - `dmp nginx:latest` 被拒绝
 - `dmp gh` 支持 GitHub 文件下载加速
 - `dmp gh` 支持 `-t, --timeout` 参数
@@ -267,7 +262,6 @@ go build -o dmp ./cmd/dmp
 ./dmp --help
 ./dmp version
 ./dmp pull -t 60 nginx:latest
-./dmp pull -p http://127.0.0.1:7890 nginx:latest
 ./dmp pull ghcr.io/leafney/ai-signin:0.6.8
 ./dmp gh -t 60 -o /tmp -p http://127.0.0.1:7890 https://github.com/leafney/docker-mirror-proxy/releases/download/v0.0.4/dmp-linux-amd64.tar.gz
 ```
@@ -277,7 +271,6 @@ go build -o dmp ./cmd/dmp
 - 无参数显示帮助
 - 默认超时时间为 60 秒
 - 支持通过 `-t, --timeout` 临时设置超时时间
-- 支持通过 `-p, --proxy` 临时指定代理
 - Docker 镜像拉取必须使用 `dmp pull <镜像>`
 - 不兼容 `dmp <镜像>` 直接拉取形式
 - 支持 `gh` 二级命令下载 GitHub 文件

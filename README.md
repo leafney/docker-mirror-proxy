@@ -13,7 +13,6 @@
 dmp pull nginx:latest
 dmp pull ghcr.io/leafney/ai-signin:0.6.8
 dmp pull --timeout 30 nginx:latest
-dmp pull -t 30 -p http://127.0.0.1:7890 nginx:latest
 dmp gh https://github.com/leafney/docker-mirror-proxy/releases/download/v0.0.4/dmp-linux-amd64.tar.gz
 dmp gh -t 30 -o /tmp https://github.com/leafney/docker-mirror-proxy/releases/download/v0.0.4/dmp-linux-amd64.tar.gz
 dmp gh -p http://127.0.0.1:7890 https://github.com/leafney/docker-mirror-proxy/releases/download/v0.0.4/dmp-linux-amd64.tar.gz
@@ -71,7 +70,7 @@ ghcr.io/leafney/ai-signin:0.6.8
 
 GitHub 文件下载会自动检测当前系统中的 `curl` 或 `wget`，优先使用 `curl`。下载目录必须存在，程序会输出下载目录和最终文件位置的绝对路径。
 
-`pull` 和 `gh` 都支持通过 `-p, --proxy` 指定代理地址。指定代理后，程序会优先通过代理访问原始镜像或原始 GitHub 地址；代理请求失败或超时后，再回退到内置加速地址池。
+`gh` 支持通过 `-p, --proxy` 指定代理地址。指定代理后，程序会优先通过代理访问原始 GitHub 地址；代理请求失败或超时后，再回退到内置加速地址池。
 
 ## 参数
 
@@ -81,8 +80,6 @@ GitHub 文件下载会自动检测当前系统中的 `curl` 或 `wget`，优先�
 -t, --timeout int
     单个加速地址的超时时间，单位为秒，默认 60
 
--p, --proxy string
-    代理地址，例如 http://127.0.0.1:7890
 ```
 
 `gh` 命令支持：
