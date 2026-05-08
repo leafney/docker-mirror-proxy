@@ -48,6 +48,7 @@ func New(cfg Config) *cobra.Command {
 	}
 	root.SetOut(cfg.Out)
 	root.SetErr(cfg.Err)
+	root.SetHelpCommand(&cobra.Command{Hidden: true})
 	root.CompletionOptions.DisableDefaultCmd = true
 	root.Flags().BoolVarP(&showVersion, "version", "v", false, "显示版本信息")
 
@@ -144,7 +145,7 @@ func isRootFlag(arg string) bool {
 
 func isKnownCommand(arg string) bool {
 	switch arg {
-	case "pull", "gh", "pip", "npm", "help":
+	case "pull", "gh", "pip", "npm":
 		return true
 	default:
 		return false
