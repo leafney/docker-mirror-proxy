@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/leafney/docker-mirror-proxy/internal/app"
+	"github.com/leafney/docker-mirror-proxy/internal/ghapp"
 	"github.com/spf13/cobra"
 )
 
@@ -45,7 +46,7 @@ func New(cfg Config) *cobra.Command {
 	root.CompletionOptions.DisableDefaultCmd = true
 
 	root.AddCommand(newPullCommand(cfg.Out))
-	root.AddCommand(newReservedCommand("gh", "GitHub 加速"))
+	root.AddCommand(newGhCommand(cfg.Out))
 	root.AddCommand(newReservedCommand("pip", "Python 包加速"))
 	root.AddCommand(newReservedCommand("npm", "Node 包加速"))
 	root.AddCommand(newVersionCommand(cfg))
@@ -76,6 +77,32 @@ func newPullCommand(out io.Writer) *cobra.Command {
 
 	cmd.Flags().IntVar(&timeoutSeconds, "timeout", 60, "单个加速地址的超时时间，单位为秒")
 	cmd.Flags().BoolVar(&noClean, "no-clean", false, "成功后不删除临时加速镜像标签")
+	return cmd
+}
+
+func newGhCommand(out io.Writer) *cobra.Command {
+	var timeoutSeconds int
+	var output string
+
+	cmd := &cobra.Command{
+		Use:   "gh <url> [url...]",
+		Short: "下载 GitHub 文件",
+		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if timeoutSeconds <= 0 {
+				return fmt.Errorf("--timeout 必须大于 0")
+			}
+			return ghapp.Run(cmd.Context(), ghapp.Options{
+				URLs:    args,
+				Timeout: time.Duration(timeoutSeconds) * time.Second,
+				Output:  output,
+				Out:     out,
+			})
+		},
+	}
+
+	cmd.Flags().IntVarP(&timeoutSeconds, "timeout", "t", 60, "单个加速地址的超时时间，单位为秒")
+	cmd.Flags().StringVarP(&output, "output", "o", ".", "下载目录")
 	return cmd
 }
 

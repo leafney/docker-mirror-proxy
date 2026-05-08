@@ -4,7 +4,7 @@
 
 项目名称为 `docker-mirror-proxy`，程序名称保持为 `dmp`，含义为 Docker Mirror Proxy。
 
-`dmp` 是一个多类型下载加速命令行工具。第一版编译后只提供一个二进制文件，不读取配置文件，先实现 Docker 镜像拉取加速能力。
+`dmp` 是一个多类型下载加速命令行工具。第一版编译后只提供一个二进制文件，不读取配置文件，先实现 Docker 镜像拉取加速能力，并补充 GitHub 文件下载加速能力。
 
 Docker 镜像拉取使用二级命令 `pull`：
 
@@ -62,7 +62,7 @@ dmp version
 dmp pull --timeout 60 nginx:latest
 dmp pull nginx:latest
 dmp pull ghcr.io/leafney/ai-signin:0.6.8
-dmp gh
+dmp gh -t 60 -o /tmp https://github.com/leafney/docker-mirror-proxy/releases/download/v0.0.4/dmp-linux-amd64.tar.gz
 dmp pip
 dmp npm
 ```
@@ -71,15 +71,18 @@ dmp npm
 
 - `dmp` 不带参数时等同于 `dmp --help`
 - `dmp pull` 是 Docker 镜像拉取加速命令
-- `dmp gh` 预留给 GitHub 加速
+- `dmp gh` 是 GitHub 文件下载加速命令
 - `dmp pip` 预留给 Python 包加速
 - `dmp npm` 预留给 Node 包加速
-- 第一版中 `gh`、`pip`、`npm` 只输出暂未实现提示
+- 第一版中 `pip`、`npm` 只输出暂未实现提示
 - 不支持 `dmp nginx:latest` 快捷调用
 - 默认单个镜像地址超时时间为 `60` 秒
 - `--timeout` 支持临时设置超时时间，单位为秒
 - 支持一次传入多个镜像，按顺序逐个处理
 - 某个镜像处理失败后继续处理后续镜像，最后返回非零退出码
+- `dmp gh` 支持 `-t, --timeout` 设置超时时间
+- `dmp gh` 支持 `-o, --output` 设置下载目录，目录必须存在
+- `dmp gh` 自动检测 `curl` 和 `wget`，优先使用 `curl`
 
 ## 下载流程
 
@@ -142,6 +145,22 @@ internal/
   docker/
     client.go
 
+  ghapp/
+    app.go
+    app_test.go
+
+  ghdownload/
+    client.go
+    client_test.go
+
+  ghmirror/
+    resolver.go
+    resolver_test.go
+
+  ghurl/
+    parser.go
+    parser_test.go
+
   image/
     parser.go
     parser_test.go
@@ -170,6 +189,10 @@ README.md
 - `internal/mirror`：维护内置镜像地址池，生成候选代理镜像。
 - `internal/docker`：封装 `docker pull`、`docker tag`、`docker rmi`。
 - `internal/app`：串联完整业务流程，包括失败切换、超时、日志和清理。
+- `internal/ghapp`：串联 GitHub 文件下载流程，包括失败切换、超时、日志和最终文件路径输出。
+- `internal/ghdownload`：检测并封装 `curl`、`wget` 下载命令。
+- `internal/ghmirror`：维护 GitHub 加速地址池，生成候选下载地址。
+- `internal/ghurl`：校验 GitHub 下载地址并解析原始文件名。
 - `internal/logx`：统一日志输出格式。
 
 ## 测试规划
@@ -190,7 +213,12 @@ README.md
 - `dmp` 无参数显示帮助
 - `dmp pull` 执行 Docker 镜像加速拉取
 - `dmp nginx:latest` 被拒绝
-- `dmp gh`、`dmp pip`、`dmp npm` 返回暂未实现提示
+- `dmp gh` 支持 GitHub 文件下载加速
+- `dmp gh` 支持 `-t, --timeout` 参数
+- `dmp gh` 支持 `-o, --output` 参数
+- `dmp gh` 下载目录不存在时报错，不自动创建
+- `dmp gh` 下载完成后输出文件绝对路径
+- `dmp pip`、`dmp npm` 返回暂未实现提示
 
 ## GitHub Actions 打包
 
@@ -232,6 +260,7 @@ go build -o dmp ./cmd/dmp
 ./dmp version
 ./dmp pull --timeout 60 nginx:latest
 ./dmp pull ghcr.io/leafney/ai-signin:0.6.8
+./dmp gh -t 60 -o /tmp https://github.com/leafney/docker-mirror-proxy/releases/download/v0.0.4/dmp-linux-amd64.tar.gz
 ```
 
 功能验收：
@@ -241,7 +270,8 @@ go build -o dmp ./cmd/dmp
 - 支持通过 `--timeout` 临时设置超时时间
 - Docker 镜像拉取必须使用 `dmp pull <镜像>`
 - 不兼容 `dmp <镜像>` 直接拉取形式
-- 预留 `gh`、`pip`、`npm` 二级命令
+- 支持 `gh` 二级命令下载 GitHub 文件
+- 预留 `pip`、`npm` 二级命令
 - 只支持 Docker Hub 官方镜像和 GHCR 镜像
 - 使用统一内置第三方镜像地址池
 - 某个代理地址失败或超时后自动尝试下一个

@@ -3,6 +3,7 @@ package cli
 import (
 	"bytes"
 	"context"
+	"strings"
 	"testing"
 )
 
@@ -38,7 +39,7 @@ func TestRootRejectsImageShortcut(t *testing.T) {
 }
 
 func TestReservedCommandsReturnNotImplemented(t *testing.T) {
-	for _, name := range []string{"gh", "pip", "npm"} {
+	for _, name := range []string{"pip", "npm"} {
 		var out bytes.Buffer
 		cmd := New(Config{
 			Version: "test",
@@ -53,6 +54,38 @@ func TestReservedCommandsReturnNotImplemented(t *testing.T) {
 		if !bytes.Contains(out.Bytes(), []byte("暂未实现")) {
 			t.Fatalf("%s output missing not implemented message: %s", name, out.String())
 		}
+	}
+}
+
+func TestGhCommandRequiresURL(t *testing.T) {
+	var out bytes.Buffer
+	cmd := New(Config{
+		Version: "test",
+		Out:     &out,
+		Err:     &out,
+	})
+	cmd.SetArgs([]string{"gh"})
+
+	if err := cmd.ExecuteContext(context.Background()); err == nil {
+		t.Fatal("ExecuteContext returned nil error")
+	}
+}
+
+func TestGhCommandSupportsShortFlags(t *testing.T) {
+	var out bytes.Buffer
+	cmd := New(Config{
+		Version: "test",
+		Out:     &out,
+		Err:     &out,
+	})
+	cmd.SetArgs([]string{"gh", "-t", "0", "-o", ".", "https://github.com/leafney/docker-mirror-proxy/releases/download/v0.0.4/dmp-linux-amd64.tar.gz"})
+
+	err := cmd.ExecuteContext(context.Background())
+	if err == nil {
+		t.Fatal("ExecuteContext returned nil error")
+	}
+	if !strings.Contains(err.Error(), "--timeout 必须大于 0") {
+		t.Fatalf("error = %q, want timeout validation", err.Error())
 	}
 }
 
