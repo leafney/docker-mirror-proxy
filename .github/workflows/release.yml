@@ -1,0 +1,66 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Test
+        run: go test ./...
+
+      - name: Build
+        run: |
+          mkdir -p build dist
+          VERSION="${GITHUB_REF_NAME}"
+          GIT_BRANCH="${GITHUB_REF_NAME}"
+          GIT_COMMIT="$(git rev-parse --short HEAD)"
+          BUILD_TIME="$(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M:%S')"
+          LDFLAGS="-s -w -X 'main.Version=${VERSION}' -X 'main.GitBranch=${GIT_BRANCH}' -X 'main.GitCommit=${GIT_COMMIT}' -X 'main.BuildTime=${BUILD_TIME}'"
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o build/dmp-linux-amd64 ./cmd/dmp
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o build/dmp-linux-arm64 ./cmd/dmp
+          CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o build/dmp-darwin-arm64 ./cmd/dmp
+
+      - name: Package
+        run: |
+          mkdir -p dist
+          for target in linux-amd64 linux-arm64 darwin-arm64; do
+            package="dmp-${target}"
+            mkdir -p "dist/.tmp-${package}"
+            cp "build/${package}" "dist/.tmp-${package}/${package}"
+            tar -C "dist/.tmp-${package}" -czf "dist/${package}.tar.gz" "${package}"
+            rm -rf "dist/.tmp-${package}"
+          done
+
+      - name: Checksums
+        run: |
+          cd dist
+          sha256sum *.tar.gz > checksums.txt
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dmp-packages
+          path: dist/*
+
+      - name: Create GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
