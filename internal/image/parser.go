@@ -34,9 +34,14 @@ func Parse(input string) (Ref, error) {
 		return Ref{Original: trimmed, Type: TypeGHCR}, nil
 	}
 
-	if strings.Contains(trimmed, "/") {
+	if strings.Contains(trimmed, "/") && hasRegistryHost(trimmed) {
 		return Ref{}, fmt.Errorf("暂不支持该镜像类型: %s", input)
 	}
 
 	return Ref{Original: trimmed, Type: TypeDockerHubOfficial}, nil
+}
+
+func hasRegistryHost(ref string) bool {
+	firstPart, _, _ := strings.Cut(ref, "/")
+	return firstPart == "localhost" || strings.ContainsAny(firstPart, ".:")
 }
