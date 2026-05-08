@@ -38,7 +38,6 @@ dmp pull    Docker 镜像拉取加速
 dmp gh      GitHub 文件下载加速
 dmp pip     Python 包加速，暂未实现
 dmp npm     Node 包加速，暂未实现
-dmp version 显示版本信息
 ```
 
 ## 工作方式
@@ -98,6 +97,9 @@ GitHub 文件下载会自动检测当前系统中的 `curl` 或 `wget`，优先�
 根命令支持：
 
 ```text
+-v, --version
+    显示版本信息
+
 --help
     显示帮助信息
 ```
@@ -129,7 +131,8 @@ Build Time
 查看版本：
 
 ```bash
-dmp version
+dmp -v
+dmp --version
 ```
 
 ## 发布构建

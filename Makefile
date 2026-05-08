@@ -22,7 +22,7 @@ build:
 	CGO_ENABLED=$(CGO_ENABLED) go build -ldflags="$(LDFLAGS)" -o $(BINARY) $(PACKAGE)
 
 version: build
-	./$(BINARY) version
+	./$(BINARY) --version
 
 clean:
 	rm -f $(BINARY)

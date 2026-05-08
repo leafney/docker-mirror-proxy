@@ -28,6 +28,7 @@ func New(cfg Config) *cobra.Command {
 	if cfg.Err == nil {
 		cfg.Err = os.Stderr
 	}
+	var showVersion bool
 
 	root := &cobra.Command{
 		Use:           "dmp",
@@ -35,6 +36,10 @@ func New(cfg Config) *cobra.Command {
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if showVersion {
+				printVersion(cmd.OutOrStdout(), cfg)
+				return nil
+			}
 			if len(args) > 0 {
 				return fmt.Errorf("未知命令: %s，请使用 dmp pull <镜像>", args[0])
 			}
@@ -44,12 +49,12 @@ func New(cfg Config) *cobra.Command {
 	root.SetOut(cfg.Out)
 	root.SetErr(cfg.Err)
 	root.CompletionOptions.DisableDefaultCmd = true
+	root.Flags().BoolVarP(&showVersion, "version", "v", false, "显示版本信息")
 
 	root.AddCommand(newPullCommand(cfg.Out))
 	root.AddCommand(newGhCommand(cfg.Out))
 	root.AddCommand(newReservedCommand("pip", "Python 包加速"))
 	root.AddCommand(newReservedCommand("npm", "Node 包加速"))
-	root.AddCommand(newVersionCommand(cfg))
 
 	return root
 }
@@ -117,17 +122,11 @@ func newReservedCommand(name, desc string) *cobra.Command {
 	}
 }
 
-func newVersionCommand(cfg Config) *cobra.Command {
-	return &cobra.Command{
-		Use:   "version",
-		Short: "显示版本信息",
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Fprintf(cmd.OutOrStdout(), "Version: %s\n", cfg.Version)
-			fmt.Fprintf(cmd.OutOrStdout(), "Git Branch: %s\n", cfg.GitBranch)
-			fmt.Fprintf(cmd.OutOrStdout(), "Git Commit: %s\n", cfg.GitCommit)
-			fmt.Fprintf(cmd.OutOrStdout(), "Build Time: %s\n", cfg.BuildTime)
-		},
-	}
+func printVersion(out io.Writer, cfg Config) {
+	fmt.Fprintf(out, "Version: %s\n", cfg.Version)
+	fmt.Fprintf(out, "Git Branch: %s\n", cfg.GitBranch)
+	fmt.Fprintf(out, "Git Commit: %s\n", cfg.GitCommit)
+	fmt.Fprintf(out, "Build Time: %s\n", cfg.BuildTime)
 }
 
 func Execute(ctx context.Context, cfg Config, args []string) error {
@@ -145,7 +144,7 @@ func isRootFlag(arg string) bool {
 
 func isKnownCommand(arg string) bool {
 	switch arg {
-	case "pull", "gh", "pip", "npm", "version", "help":
+	case "pull", "gh", "pip", "npm", "help":
 		return true
 	default:
 		return false

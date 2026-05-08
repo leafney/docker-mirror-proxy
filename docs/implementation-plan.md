@@ -58,7 +58,8 @@ ghcr.io/leafney/ai-signin:0.6.8
 ```bash
 dmp
 dmp --help
-dmp version
+dmp -v
+dmp --version
 dmp pull --timeout 60 nginx:latest
 dmp pull nginx:latest
 dmp pull ghcr.io/leafney/ai-signin:0.6.8
@@ -70,6 +71,7 @@ dmp npm
 规则：
 
 - `dmp` 不带参数时等同于 `dmp --help`
+- `dmp -v` 和 `dmp --version` 显示版本信息
 - `dmp pull` 是 Docker 镜像拉取加速命令
 - `dmp gh` 是 GitHub 文件下载加速命令
 - `dmp pip` 预留给 Python 包加速
@@ -185,7 +187,7 @@ README.md
 模块职责：
 
 - `cmd/dmp`：程序入口，调用 Cobra 命令树，设置退出码。
-- `internal/cli`：基于 Cobra 定义 `pull`、`gh`、`pip`、`npm`、`version` 命令。
+- `internal/cli`：基于 Cobra 定义 `pull`、`gh`、`pip`、`npm` 命令和根命令版本参数。
 - `internal/image`：解析和校验镜像名称，只放行业务允许的镜像类型。
 - `internal/mirror`：维护内置镜像地址池，生成候选代理镜像。
 - `internal/docker`：封装 `docker pull`、`docker tag`、`docker rmi`。
@@ -260,7 +262,7 @@ go test ./...
 go build -o dmp ./cmd/dmp
 ./dmp
 ./dmp --help
-./dmp version
+./dmp --version
 ./dmp pull -t 60 nginx:latest
 ./dmp pull ghcr.io/leafney/ai-signin:0.6.8
 ./dmp gh -t 60 -o /tmp -p http://127.0.0.1:7890 https://github.com/leafney/docker-mirror-proxy/releases/download/v0.0.4/dmp-linux-amd64.tar.gz

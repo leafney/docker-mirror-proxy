@@ -161,31 +161,47 @@ func TestGhCommandSupportsProxyFlag(t *testing.T) {
 	}
 }
 
-func TestVersionCommandShowsBuildInfo(t *testing.T) {
+func TestRootVersionFlagShowsBuildInfo(t *testing.T) {
+	for _, args := range [][]string{{"-v"}, {"--version"}} {
+		var out bytes.Buffer
+		cmd := New(Config{
+			Version:   "v1.2.3",
+			GitBranch: "main",
+			GitCommit: "abc1234",
+			BuildTime: "2026-05-06 10:11:12",
+			Out:       &out,
+			Err:       &out,
+		})
+		cmd.SetArgs(args)
+
+		if err := cmd.ExecuteContext(context.Background()); err != nil {
+			t.Fatalf("ExecuteContext(%v) returned error: %v", args, err)
+		}
+
+		output := out.String()
+		for _, want := range []string{
+			"Version: v1.2.3",
+			"Git Branch: main",
+			"Git Commit: abc1234",
+			"Build Time: 2026-05-06 10:11:12",
+		} {
+			if !bytes.Contains([]byte(output), []byte(want)) {
+				t.Fatalf("version output missing %q: %s", want, output)
+			}
+		}
+	}
+}
+
+func TestVersionCommandIsRejected(t *testing.T) {
 	var out bytes.Buffer
 	cmd := New(Config{
-		Version:   "v1.2.3",
-		GitBranch: "main",
-		GitCommit: "abc1234",
-		BuildTime: "2026-05-06 10:11:12",
-		Out:       &out,
-		Err:       &out,
+		Version: "test",
+		Out:     &out,
+		Err:     &out,
 	})
 	cmd.SetArgs([]string{"version"})
 
-	if err := cmd.ExecuteContext(context.Background()); err != nil {
-		t.Fatalf("ExecuteContext returned error: %v", err)
-	}
-
-	output := out.String()
-	for _, want := range []string{
-		"Version: v1.2.3",
-		"Git Branch: main",
-		"Git Commit: abc1234",
-		"Build Time: 2026-05-06 10:11:12",
-	} {
-		if !bytes.Contains([]byte(output), []byte(want)) {
-			t.Fatalf("version output missing %q: %s", want, output)
-		}
+	if err := cmd.ExecuteContext(context.Background()); err == nil {
+		t.Fatal("ExecuteContext returned nil error")
 	}
 }
