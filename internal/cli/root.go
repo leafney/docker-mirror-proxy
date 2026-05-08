@@ -56,7 +56,7 @@ func New(cfg Config) *cobra.Command {
 
 func newPullCommand(out io.Writer) *cobra.Command {
 	var timeoutSeconds int
-	var noClean bool
+	var proxy string
 
 	cmd := &cobra.Command{
 		Use:   "pull <镜像> [镜像...]",
@@ -70,19 +70,20 @@ func newPullCommand(out io.Writer) *cobra.Command {
 				Images:  args,
 				Timeout: time.Duration(timeoutSeconds) * time.Second,
 				Out:     out,
-				NoClean: noClean,
+				Proxy:   proxy,
 			})
 		},
 	}
 
-	cmd.Flags().IntVar(&timeoutSeconds, "timeout", 60, "单个加速地址的超时时间，单位为秒")
-	cmd.Flags().BoolVar(&noClean, "no-clean", false, "成功后不删除临时加速镜像标签")
+	cmd.Flags().IntVarP(&timeoutSeconds, "timeout", "t", 60, "单个加速地址的超时时间，单位为秒")
+	cmd.Flags().StringVarP(&proxy, "proxy", "p", "", "代理地址，例如 http://127.0.0.1:7890")
 	return cmd
 }
 
 func newGhCommand(out io.Writer) *cobra.Command {
 	var timeoutSeconds int
 	var output string
+	var proxy string
 
 	cmd := &cobra.Command{
 		Use:   "gh <url> [url...]",
@@ -97,12 +98,14 @@ func newGhCommand(out io.Writer) *cobra.Command {
 				Timeout: time.Duration(timeoutSeconds) * time.Second,
 				Output:  output,
 				Out:     out,
+				Proxy:   proxy,
 			})
 		},
 	}
 
 	cmd.Flags().IntVarP(&timeoutSeconds, "timeout", "t", 60, "单个加速地址的超时时间，单位为秒")
 	cmd.Flags().StringVarP(&output, "output", "o", ".", "下载目录")
+	cmd.Flags().StringVarP(&proxy, "proxy", "p", "", "代理地址，例如 http://127.0.0.1:7890")
 	return cmd
 }
 

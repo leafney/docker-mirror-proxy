@@ -20,8 +20,8 @@ type fakeDocker struct {
 	calls      []call
 }
 
-func (f *fakeDocker) Pull(ctx context.Context, image string) error {
-	f.calls = append(f.calls, call{Name: "pull", Args: []string{image}})
+func (f *fakeDocker) Pull(ctx context.Context, image, proxy string) error {
+	f.calls = append(f.calls, call{Name: "pull", Args: []string{image, proxy}})
 	if err, ok := f.pullErrors[image]; ok {
 		return err
 	}
@@ -57,8 +57,8 @@ func TestRunTriesNextMirrorAfterPullFailure(t *testing.T) {
 	}
 
 	want := []call{
-		{Name: "pull", Args: []string{"docker.1ms.run/nginx:latest"}},
-		{Name: "pull", Args: []string{"dockerproxy.net/nginx:latest"}},
+		{Name: "pull", Args: []string{"docker.1ms.run/nginx:latest", ""}},
+		{Name: "pull", Args: []string{"dockerproxy.net/nginx:latest", ""}},
 		{Name: "tag", Args: []string{"dockerproxy.net/nginx:latest", "nginx:latest"}},
 		{Name: "rmi", Args: []string{"dockerproxy.net/nginx:latest"}},
 	}
@@ -70,6 +70,60 @@ func TestRunTriesNextMirrorAfterPullFailure(t *testing.T) {
 	}
 	if strings.Contains(out.String(), "拉取失败，切换下一个加速地址: docker.1ms.run/nginx:latest") {
 		t.Fatalf("failure switch log should not repeat failed candidate: %s", out.String())
+	}
+}
+
+func TestRunUsesProxyBeforeMirrorCandidates(t *testing.T) {
+	docker := &fakeDocker{}
+	var out bytes.Buffer
+
+	err := Run(context.Background(), Options{
+		Images:  []string{"nginx:latest"},
+		Timeout: time.Second,
+		Proxy:   "http://127.0.0.1:7890",
+		Out:     &out,
+		Docker:  docker,
+	})
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+
+	want := []call{
+		{Name: "pull", Args: []string{"nginx:latest", "http://127.0.0.1:7890"}},
+	}
+	if !reflect.DeepEqual(docker.calls, want) {
+		t.Fatalf("calls = %#v, want %#v", docker.calls, want)
+	}
+	if !strings.Contains(out.String(), "代理地址: http://127.0.0.1:7890") {
+		t.Fatalf("log output missing proxy: %s", out.String())
+	}
+}
+
+func TestRunFallsBackToMirrorCandidatesAfterProxyFailure(t *testing.T) {
+	docker := &fakeDocker{
+		pullErrors: map[string]error{
+			"nginx:latest": errors.New("proxy failed"),
+		},
+	}
+
+	err := Run(context.Background(), Options{
+		Images:  []string{"nginx:latest"},
+		Timeout: time.Second,
+		Proxy:   "http://127.0.0.1:7890",
+		Docker:  docker,
+	})
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+
+	want := []call{
+		{Name: "pull", Args: []string{"nginx:latest", "http://127.0.0.1:7890"}},
+		{Name: "pull", Args: []string{"docker.1ms.run/nginx:latest", ""}},
+		{Name: "tag", Args: []string{"docker.1ms.run/nginx:latest", "nginx:latest"}},
+		{Name: "rmi", Args: []string{"docker.1ms.run/nginx:latest"}},
+	}
+	if !reflect.DeepEqual(docker.calls, want) {
+		t.Fatalf("calls = %#v, want %#v", docker.calls, want)
 	}
 }
 

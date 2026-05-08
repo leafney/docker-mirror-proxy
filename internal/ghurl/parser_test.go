@@ -12,6 +12,10 @@ func TestParseAllowsSupportedGitHubURLs(t *testing.T) {
 			filename: "dmp-linux-amd64.tar.gz",
 		},
 		{
+			input:    "http://github.com/leafney/docker-mirror-proxy/releases/download/v0.0.4/dmp-linux-amd64.tar.gz",
+			filename: "dmp-linux-amd64.tar.gz",
+		},
+		{
 			input:    "https://github.com/stilleshan/dockerfiles/archive/master.zip",
 			filename: "master.zip",
 		},

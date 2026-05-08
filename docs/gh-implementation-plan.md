@@ -12,12 +12,14 @@ dmp gh -t 30 https://github.com/leafney/docker-mirror-proxy/releases/download/v0
 dmp gh --timeout 30 https://github.com/leafney/docker-mirror-proxy/releases/download/v0.0.4/dmp-linux-amd64.tar.gz
 dmp gh -o /tmp https://github.com/leafney/docker-mirror-proxy/releases/download/v0.0.4/dmp-linux-amd64.tar.gz
 dmp gh --output /tmp https://github.com/leafney/docker-mirror-proxy/releases/download/v0.0.4/dmp-linux-amd64.tar.gz
+dmp gh -p http://127.0.0.1:7890 https://github.com/leafney/docker-mirror-proxy/releases/download/v0.0.4/dmp-linux-amd64.tar.gz
 ```
 
 ## 参数设计
 
 - `-t, --timeout int`：单个加速地址下载超时时间，单位为秒，默认 `60`。
 - `-o, --output string`：下载目录，默认当前目录。
+- `-p, --proxy string`：代理地址，例如 `http://127.0.0.1:7890`。
 
 不提供下载工具选择参数。程序内部自动检测当前系统环境：
 
@@ -76,6 +78,8 @@ https://ghproxy.net/https://github.com/leafney/docker-mirror-proxy/releases/down
   ↓
 自动检测 curl 或 wget
   ↓
+如果指定代理，优先通过代理下载原始 URL
+  ↓
 生成候选加速 URL
   ↓
 按顺序尝试下载
@@ -100,7 +104,9 @@ https://ghproxy.net/https://github.com/leafney/docker-mirror-proxy/releases/down
 [dmp] 下载目录: /tmp
 [dmp] 下载工具: curl
 [dmp] 超时时间: 60 秒
+[dmp] 代理地址: http://127.0.0.1:7890
 [dmp] 候选加速地址数量: 10
+[dmp] 优先尝试代理下载: https://github.com/...
 [dmp] 尝试 1/10: https://ghfast.top/https://github.com/...
 [dmp] 下载失败，切换下一个加速地址
 [dmp] 尝试 2/10: https://gh-proxy.com/https://github.com/...
@@ -137,7 +143,7 @@ internal/
 - `internal/ghmirror`：维护 GitHub 加速地址池，生成候选加速 URL。
 - `internal/ghdownload`：检测 `curl` / `wget`，封装系统下载命令。
 - `internal/ghapp`：串联完整下载流程，包括超时、失败轮换、日志和文件路径输出。
-- `internal/cli`：把 `gh` 从预留命令改为真实命令，绑定 `-t/--timeout` 和 `-o/--output` 参数。
+- `internal/cli`：把 `gh` 从预留命令改为真实命令，绑定 `-t/--timeout`、`-o/--output` 和 `-p/--proxy` 参数。
 
 ## 测试规划
 
@@ -156,3 +162,4 @@ internal/
 - 下载成功后输出最终文件绝对路径
 - `dmp gh -t` 和 `dmp gh --timeout` 均可用
 - `dmp gh -o` 和 `dmp gh --output` 均可用
+- `dmp gh -p` 和 `dmp gh --proxy` 均可用

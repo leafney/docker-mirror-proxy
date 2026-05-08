@@ -15,7 +15,7 @@ import (
 )
 
 type Docker interface {
-	Pull(ctx context.Context, image string) error
+	Pull(ctx context.Context, image, proxy string) error
 	Tag(ctx context.Context, source, target string) error
 	Remove(ctx context.Context, image string) error
 }
@@ -25,7 +25,7 @@ type Options struct {
 	Timeout time.Duration
 	Out     io.Writer
 	Docker  Docker
-	NoClean bool
+	Proxy   string
 }
 
 func Run(ctx context.Context, opts Options) error {
@@ -63,14 +63,31 @@ func runOne(ctx context.Context, opts Options, logger logx.Logger, original stri
 	logger.Printf("原始镜像: %s", ref.Original)
 	logger.Printf("镜像类型: %s", ref.Type)
 	logger.Printf("超时时间: %.0f 秒", opts.Timeout.Seconds())
+	if opts.Proxy != "" {
+		logger.Printf("代理地址: %s", opts.Proxy)
+	}
 	logger.Printf("候选加速地址数量: %d", len(candidates))
 
 	var pullErrs []error
+	if opts.Proxy != "" {
+		logger.Printf("优先尝试代理拉取: %s", ref.Original)
+		pullCtx, cancel := context.WithTimeout(ctx, opts.Timeout)
+		err := opts.Docker.Pull(pullCtx, ref.Original, opts.Proxy)
+		cancel()
+		if err == nil {
+			logger.Printf("代理拉取成功: %s", ref.Original)
+			logger.Printf("完成: %s", ref.Original)
+			return nil
+		}
+		logger.Printf("代理拉取失败，切换内置加速地址")
+		pullErrs = append(pullErrs, fmt.Errorf("%s via proxy %s: %w", ref.Original, opts.Proxy, err))
+	}
+
 	for i, candidate := range candidates {
 		logger.Printf("尝试 %d/%d: %s", i+1, len(candidates), candidate)
 
 		pullCtx, cancel := context.WithTimeout(ctx, opts.Timeout)
-		err := opts.Docker.Pull(pullCtx, candidate)
+		err := opts.Docker.Pull(pullCtx, candidate, "")
 		cancel()
 		if err != nil {
 			logger.Printf("拉取失败，切换下一个加速地址")
@@ -84,11 +101,9 @@ func runOne(ctx context.Context, opts Options, logger logx.Logger, original stri
 			return fmt.Errorf("打标签失败: %w", err)
 		}
 
-		if !opts.NoClean {
-			logger.Printf("清理临时标签: %s", candidate)
-			if err := opts.Docker.Remove(ctx, candidate); err != nil {
-				logger.Printf("清理临时标签失败: %v", err)
-			}
+		logger.Printf("清理临时标签: %s", candidate)
+		if err := opts.Docker.Remove(ctx, candidate); err != nil {
+			logger.Printf("清理临时标签失败: %v", err)
 		}
 
 		logger.Printf("完成: %s", ref.Original)

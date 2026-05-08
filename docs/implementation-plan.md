@@ -60,9 +60,10 @@ dmp
 dmp --help
 dmp version
 dmp pull --timeout 60 nginx:latest
+dmp pull -t 60 -p http://127.0.0.1:7890 nginx:latest
 dmp pull nginx:latest
 dmp pull ghcr.io/leafney/ai-signin:0.6.8
-dmp gh -t 60 -o /tmp https://github.com/leafney/docker-mirror-proxy/releases/download/v0.0.4/dmp-linux-amd64.tar.gz
+dmp gh -t 60 -o /tmp -p http://127.0.0.1:7890 https://github.com/leafney/docker-mirror-proxy/releases/download/v0.0.4/dmp-linux-amd64.tar.gz
 dmp pip
 dmp npm
 ```
@@ -77,11 +78,13 @@ dmp npm
 - 第一版中 `pip`、`npm` 只输出暂未实现提示
 - 不支持 `dmp nginx:latest` 快捷调用
 - 默认单个镜像地址超时时间为 `60` 秒
-- `--timeout` 支持临时设置超时时间，单位为秒
+- `-t, --timeout` 支持临时设置超时时间，单位为秒
+- `dmp pull` 支持 `-p, --proxy` 指定代理，代理失败或超时后回退内置加速地址
 - 支持一次传入多个镜像，按顺序逐个处理
 - 某个镜像处理失败后继续处理后续镜像，最后返回非零退出码
 - `dmp gh` 支持 `-t, --timeout` 设置超时时间
 - `dmp gh` 支持 `-o, --output` 设置下载目录，目录必须存在
+- `dmp gh` 支持 `-p, --proxy` 指定代理，代理失败或超时后回退内置加速地址
 - `dmp gh` 自动检测 `curl` 和 `wget`，优先使用 `curl`
 
 ## 下载流程
@@ -90,6 +93,8 @@ dmp npm
 
 ```text
 解析原始镜像
+  ↓
+如果指定代理，优先通过代理拉取原始镜像
   ↓
 生成候选代理镜像地址
   ↓
@@ -212,10 +217,13 @@ README.md
 - 默认执行 `docker rmi` 清理临时代理标签
 - `dmp` 无参数显示帮助
 - `dmp pull` 执行 Docker 镜像加速拉取
+- `dmp pull` 支持 `-t, --timeout` 参数
+- `dmp pull` 支持 `-p, --proxy` 参数
 - `dmp nginx:latest` 被拒绝
 - `dmp gh` 支持 GitHub 文件下载加速
 - `dmp gh` 支持 `-t, --timeout` 参数
 - `dmp gh` 支持 `-o, --output` 参数
+- `dmp gh` 支持 `-p, --proxy` 参数
 - `dmp gh` 下载目录不存在时报错，不自动创建
 - `dmp gh` 下载完成后输出文件绝对路径
 - `dmp pip`、`dmp npm` 返回暂未实现提示
@@ -258,16 +266,18 @@ go build -o dmp ./cmd/dmp
 ./dmp
 ./dmp --help
 ./dmp version
-./dmp pull --timeout 60 nginx:latest
+./dmp pull -t 60 nginx:latest
+./dmp pull -p http://127.0.0.1:7890 nginx:latest
 ./dmp pull ghcr.io/leafney/ai-signin:0.6.8
-./dmp gh -t 60 -o /tmp https://github.com/leafney/docker-mirror-proxy/releases/download/v0.0.4/dmp-linux-amd64.tar.gz
+./dmp gh -t 60 -o /tmp -p http://127.0.0.1:7890 https://github.com/leafney/docker-mirror-proxy/releases/download/v0.0.4/dmp-linux-amd64.tar.gz
 ```
 
 功能验收：
 
 - 无参数显示帮助
 - 默认超时时间为 60 秒
-- 支持通过 `--timeout` 临时设置超时时间
+- 支持通过 `-t, --timeout` 临时设置超时时间
+- 支持通过 `-p, --proxy` 临时指定代理
 - Docker 镜像拉取必须使用 `dmp pull <镜像>`
 - 不兼容 `dmp <镜像>` 直接拉取形式
 - 支持 `gh` 二级命令下载 GitHub 文件

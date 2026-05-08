@@ -22,8 +22,8 @@ func Parse(input string) (Ref, error) {
 	if err != nil {
 		return Ref{}, fmt.Errorf("下载地址格式错误: %s", input)
 	}
-	if u.Scheme != "https" {
-		return Ref{}, fmt.Errorf("仅支持 https 下载地址: %s", input)
+	if u.Scheme != "https" && u.Scheme != "http" {
+		return Ref{}, fmt.Errorf("仅支持 http 或 https 下载地址: %s", input)
 	}
 	if !isSupportedHost(u.Hostname()) {
 		return Ref{}, fmt.Errorf("仅支持 GitHub 下载地址: %s", input)

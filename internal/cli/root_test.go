@@ -89,6 +89,78 @@ func TestGhCommandSupportsShortFlags(t *testing.T) {
 	}
 }
 
+func TestPullCommandSupportsShortTimeoutFlag(t *testing.T) {
+	var out bytes.Buffer
+	cmd := New(Config{
+		Version: "test",
+		Out:     &out,
+		Err:     &out,
+	})
+	cmd.SetArgs([]string{"pull", "-t", "0", "nginx:latest"})
+
+	err := cmd.ExecuteContext(context.Background())
+	if err == nil {
+		t.Fatal("ExecuteContext returned nil error")
+	}
+	if !strings.Contains(err.Error(), "--timeout 必须大于 0") {
+		t.Fatalf("error = %q, want timeout validation", err.Error())
+	}
+}
+
+func TestPullCommandSupportsProxyFlag(t *testing.T) {
+	var out bytes.Buffer
+	cmd := New(Config{
+		Version: "test",
+		Out:     &out,
+		Err:     &out,
+	})
+	cmd.SetArgs([]string{"pull", "-p", "http://127.0.0.1:7890", "-t", "0", "nginx:latest"})
+
+	err := cmd.ExecuteContext(context.Background())
+	if err == nil {
+		t.Fatal("ExecuteContext returned nil error")
+	}
+	if !strings.Contains(err.Error(), "--timeout 必须大于 0") {
+		t.Fatalf("error = %q, want timeout validation", err.Error())
+	}
+}
+
+func TestPullCommandRejectsNoCleanFlag(t *testing.T) {
+	var out bytes.Buffer
+	cmd := New(Config{
+		Version: "test",
+		Out:     &out,
+		Err:     &out,
+	})
+	cmd.SetArgs([]string{"pull", "--no-clean", "-t", "0", "nginx:latest"})
+
+	err := cmd.ExecuteContext(context.Background())
+	if err == nil {
+		t.Fatal("ExecuteContext returned nil error")
+	}
+	if !strings.Contains(err.Error(), "unknown flag: --no-clean") {
+		t.Fatalf("error = %q, want unknown no-clean flag", err.Error())
+	}
+}
+
+func TestGhCommandSupportsProxyFlag(t *testing.T) {
+	var out bytes.Buffer
+	cmd := New(Config{
+		Version: "test",
+		Out:     &out,
+		Err:     &out,
+	})
+	cmd.SetArgs([]string{"gh", "-p", "http://127.0.0.1:7890", "-t", "0", "https://github.com/leafney/docker-mirror-proxy/releases/download/v0.0.4/dmp-linux-amd64.tar.gz"})
+
+	err := cmd.ExecuteContext(context.Background())
+	if err == nil {
+		t.Fatal("ExecuteContext returned nil error")
+	}
+	if !strings.Contains(err.Error(), "--timeout 必须大于 0") {
+		t.Fatalf("error = %q, want timeout validation", err.Error())
+	}
+}
+
 func TestVersionCommandShowsBuildInfo(t *testing.T) {
 	var out bytes.Buffer
 	cmd := New(Config{

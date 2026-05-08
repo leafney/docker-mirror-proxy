@@ -17,7 +17,7 @@ import (
 
 type Downloader interface {
 	Detect() (ghdownload.Tool, error)
-	Download(ctx context.Context, tool ghdownload.Tool, url, outputDir string, timeout time.Duration) error
+	Download(ctx context.Context, tool ghdownload.Tool, url, outputDir string, timeout time.Duration, proxy string) error
 }
 
 type Options struct {
@@ -26,6 +26,7 @@ type Options struct {
 	Output     string
 	Out        io.Writer
 	Downloader Downloader
+	Proxy      string
 }
 
 func Run(ctx context.Context, opts Options) error {
@@ -80,14 +81,31 @@ func runOne(ctx context.Context, opts Options, logger logx.Logger, tool ghdownlo
 	logger.Printf("下载目录: %s", outputDir)
 	logger.Printf("下载工具: %s", tool)
 	logger.Printf("超时时间: %.0f 秒", opts.Timeout.Seconds())
+	if opts.Proxy != "" {
+		logger.Printf("代理地址: %s", opts.Proxy)
+	}
 	logger.Printf("候选加速地址数量: %d", len(candidates))
 
 	var downloadErrs []error
+	if opts.Proxy != "" {
+		logger.Printf("优先尝试代理下载: %s", ref.Original)
+		downloadCtx, cancel := context.WithTimeout(ctx, opts.Timeout)
+		err := opts.Downloader.Download(downloadCtx, tool, ref.Original, outputDir, opts.Timeout, opts.Proxy)
+		cancel()
+		if err == nil {
+			logger.Printf("下载成功")
+			logger.Printf("文件位置: %s", filepath.Join(outputDir, ref.Filename))
+			return nil
+		}
+		logger.Printf("代理下载失败，切换内置加速地址")
+		downloadErrs = append(downloadErrs, fmt.Errorf("%s via proxy %s: %w", ref.Original, opts.Proxy, err))
+	}
+
 	for i, candidate := range candidates {
 		logger.Printf("尝试 %d/%d: %s", i+1, len(candidates), candidate)
 
 		downloadCtx, cancel := context.WithTimeout(ctx, opts.Timeout)
-		err := opts.Downloader.Download(downloadCtx, tool, candidate, outputDir, opts.Timeout)
+		err := opts.Downloader.Download(downloadCtx, tool, candidate, outputDir, opts.Timeout, "")
 		cancel()
 		if err != nil {
 			logger.Printf("下载失败，切换下一个加速地址")

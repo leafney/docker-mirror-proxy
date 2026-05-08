@@ -18,6 +18,7 @@ type downloadCall struct {
 	URL       string
 	OutputDir string
 	Timeout   time.Duration
+	Proxy     string
 }
 
 type fakeDownloader struct {
@@ -34,12 +35,13 @@ func (f *fakeDownloader) Detect() (ghdownload.Tool, error) {
 	return f.tool, nil
 }
 
-func (f *fakeDownloader) Download(ctx context.Context, tool ghdownload.Tool, url, outputDir string, timeout time.Duration) error {
+func (f *fakeDownloader) Download(ctx context.Context, tool ghdownload.Tool, url, outputDir string, timeout time.Duration, proxy string) error {
 	f.calls = append(f.calls, downloadCall{
 		Tool:      tool,
 		URL:       url,
 		OutputDir: outputDir,
 		Timeout:   timeout,
+		Proxy:     proxy,
 	})
 	if err, ok := f.downloadErrors[url]; ok {
 		return err
@@ -74,12 +76,14 @@ func TestRunDownloadsWithNextMirrorAfterFailure(t *testing.T) {
 			URL:       "https://ghfast.top/https://github.com/leafney/docker-mirror-proxy/releases/download/v0.0.4/dmp-linux-amd64.tar.gz",
 			OutputDir: tmp,
 			Timeout:   time.Second,
+			Proxy:     "",
 		},
 		{
 			Tool:      ghdownload.ToolCurl,
 			URL:       "https://gh-proxy.com/https://github.com/leafney/docker-mirror-proxy/releases/download/v0.0.4/dmp-linux-amd64.tar.gz",
 			OutputDir: tmp,
 			Timeout:   time.Second,
+			Proxy:     "",
 		},
 	}
 	if !reflect.DeepEqual(downloader.calls, want) {
@@ -95,6 +99,81 @@ func TestRunDownloadsWithNextMirrorAfterFailure(t *testing.T) {
 	}
 	if !strings.Contains(output, "文件位置: "+filepath.Join(tmp, "dmp-linux-amd64.tar.gz")) {
 		t.Fatalf("log output missing final file path: %s", output)
+	}
+}
+
+func TestRunDownloadsOriginalURLWithProxyBeforeMirrorCandidates(t *testing.T) {
+	tmp := t.TempDir()
+	downloader := &fakeDownloader{tool: ghdownload.ToolCurl}
+	var out bytes.Buffer
+
+	err := Run(context.Background(), Options{
+		URLs:       []string{"https://github.com/leafney/docker-mirror-proxy/releases/download/v0.0.4/dmp-linux-amd64.tar.gz"},
+		Timeout:    time.Second,
+		Output:     tmp,
+		Proxy:      "http://127.0.0.1:7890",
+		Out:        &out,
+		Downloader: downloader,
+	})
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+
+	want := []downloadCall{
+		{
+			Tool:      ghdownload.ToolCurl,
+			URL:       "https://github.com/leafney/docker-mirror-proxy/releases/download/v0.0.4/dmp-linux-amd64.tar.gz",
+			OutputDir: tmp,
+			Timeout:   time.Second,
+			Proxy:     "http://127.0.0.1:7890",
+		},
+	}
+	if !reflect.DeepEqual(downloader.calls, want) {
+		t.Fatalf("calls = %#v, want %#v", downloader.calls, want)
+	}
+	if !strings.Contains(out.String(), "代理地址: http://127.0.0.1:7890") {
+		t.Fatalf("log output missing proxy: %s", out.String())
+	}
+}
+
+func TestRunFallsBackToMirrorCandidatesAfterProxyDownloadFailure(t *testing.T) {
+	tmp := t.TempDir()
+	downloader := &fakeDownloader{
+		tool: ghdownload.ToolCurl,
+		downloadErrors: map[string]error{
+			"https://github.com/leafney/docker-mirror-proxy/releases/download/v0.0.4/dmp-linux-amd64.tar.gz": errors.New("proxy failed"),
+		},
+	}
+
+	err := Run(context.Background(), Options{
+		URLs:       []string{"https://github.com/leafney/docker-mirror-proxy/releases/download/v0.0.4/dmp-linux-amd64.tar.gz"},
+		Timeout:    time.Second,
+		Output:     tmp,
+		Proxy:      "http://127.0.0.1:7890",
+		Downloader: downloader,
+	})
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+
+	want := []downloadCall{
+		{
+			Tool:      ghdownload.ToolCurl,
+			URL:       "https://github.com/leafney/docker-mirror-proxy/releases/download/v0.0.4/dmp-linux-amd64.tar.gz",
+			OutputDir: tmp,
+			Timeout:   time.Second,
+			Proxy:     "http://127.0.0.1:7890",
+		},
+		{
+			Tool:      ghdownload.ToolCurl,
+			URL:       "https://ghfast.top/https://github.com/leafney/docker-mirror-proxy/releases/download/v0.0.4/dmp-linux-amd64.tar.gz",
+			OutputDir: tmp,
+			Timeout:   time.Second,
+			Proxy:     "",
+		},
+	}
+	if !reflect.DeepEqual(downloader.calls, want) {
+		t.Fatalf("calls = %#v, want %#v", downloader.calls, want)
 	}
 }
 

@@ -54,7 +54,7 @@ func (c *Client) Detect() (Tool, error) {
 	return "", fmt.Errorf("当前系统未找到 curl 或 wget，请先安装其中一个下载工具")
 }
 
-func (c *Client) Download(ctx context.Context, tool Tool, url, outputDir string, timeout time.Duration) error {
+func (c *Client) Download(ctx context.Context, tool Tool, url, outputDir string, timeout time.Duration, proxy string) error {
 	timeoutSeconds := strconv.Itoa(int(timeout.Seconds()))
 	var args []string
 	switch tool {
@@ -66,14 +66,24 @@ func (c *Client) Download(ctx context.Context, tool Tool, url, outputDir string,
 			"--max-time", timeoutSeconds,
 			"-O",
 			"--output-dir", outputDir,
-			url,
 		}
+		if proxy != "" {
+			args = append(args, "--proxy", proxy)
+		}
+		args = append(args, url)
 	case ToolWget:
 		args = []string{
 			"-T", timeoutSeconds,
 			"-P", outputDir,
-			url,
 		}
+		if proxy != "" {
+			args = append(args,
+				"-e", "use_proxy=yes",
+				"-e", "http_proxy="+proxy,
+				"-e", "https_proxy="+proxy,
+			)
+		}
+		args = append(args, url)
 	default:
 		return fmt.Errorf("不支持的下载工具: %s", tool)
 	}
