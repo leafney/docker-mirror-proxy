@@ -12,9 +12,12 @@
 
 `pull` 命令会按顺序尝试内置加速地址池中的地址。某个地址失败或超时后，会自动切换下一个地址。拉取成功后，会把镜像重新打回原始名称，并删除临时加速镜像标签。
 
+这里的 `--timeout` 表示“无进展超时”，不是整个 `docker pull` 的总耗时。只要 Docker 仍有 stdout 或 stderr 输出，程序就会继续等待。需要限制单个加速地址总耗时时，可以配合 `--max-time` 使用。
+
 ### 支持参数
 
-- `-t, --timeout int` 单个加速地址的超时时间，单位为秒，默认 60
+- `-t, --timeout int` 单个加速地址的无进展超时时间，单位为秒，默认 60
+- `-m, --max-time int` 单个加速地址的总耗时上限，单位为秒，默认 0，表示不限制
 
 ### 使用方式
 
@@ -25,8 +28,11 @@ dmp pull nginx:latest
 # dmp pull <GHCR 镜像名称>
 dmp pull ghcr.io/leafney/ai-signin:0.6.8
 
-# dmp pull -t/--timeout <超时时间> <镜像名称> （自定义下载超时时间）
+# dmp pull -t/--timeout <超时时间> <镜像名称> （自定义无进展超时时间）
 dmp pull --timeout 30 nginx:latest
+
+# dmp pull -t/--timeout <无进展超时时间> -m/--max-time <总耗时上限> <镜像名称>
+dmp pull --timeout 60 --max-time 1800 rabbitmq:4.3.1-management
 ```
 
 ### 操作示例
@@ -35,7 +41,8 @@ dmp pull --timeout 30 nginx:latest
 ➜ dmp pull ghcr.io/leafney/ai-signin:0.6.11
 [dmp] 原始镜像: ghcr.io/leafney/ai-signin:0.6.11
 [dmp] 镜像类型: ghcr
-[dmp] 超时时间: 60 秒
+[dmp] 无进展超时时间: 60 秒
+[dmp] 单个加速地址总耗时上限: 不限制
 [dmp] 候选加速地址数量: 4
 [dmp] 尝试 1/4: docker.1ms.run/ghcr.io/leafney/ai-signin:0.6.11
 Error response from daemon: manifest for docker.1ms.run/ghcr.io/leafney/ai-signin:0.6.11 not found: manifest unknown: 没有找到该资源，请检查镜像名称或者版本(tag)是否真实存在！(例如：拼写错误? 没有指定版本[tag]? 版本错误? AI胡诌?) 欢迎联系我们获得帮助 QQ群：1102523830

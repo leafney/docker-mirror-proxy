@@ -107,6 +107,42 @@ func TestPullCommandSupportsShortTimeoutFlag(t *testing.T) {
 	}
 }
 
+func TestPullCommandSupportsShortMaxTimeFlag(t *testing.T) {
+	var out bytes.Buffer
+	cmd := New(Config{
+		Version: "test",
+		Out:     &out,
+		Err:     &out,
+	})
+	cmd.SetArgs([]string{"pull", "-m", "-1", "nginx:latest"})
+
+	err := cmd.ExecuteContext(context.Background())
+	if err == nil {
+		t.Fatal("ExecuteContext returned nil error")
+	}
+	if !strings.Contains(err.Error(), "--max-time 不能小于 0") {
+		t.Fatalf("error = %q, want max-time validation", err.Error())
+	}
+}
+
+func TestPullCommandSupportsLongMaxTimeFlag(t *testing.T) {
+	var out bytes.Buffer
+	cmd := New(Config{
+		Version: "test",
+		Out:     &out,
+		Err:     &out,
+	})
+	cmd.SetArgs([]string{"pull", "--max-time", "-1", "nginx:latest"})
+
+	err := cmd.ExecuteContext(context.Background())
+	if err == nil {
+		t.Fatal("ExecuteContext returned nil error")
+	}
+	if !strings.Contains(err.Error(), "--max-time 不能小于 0") {
+		t.Fatalf("error = %q, want max-time validation", err.Error())
+	}
+}
+
 func TestPullCommandRejectsProxyFlag(t *testing.T) {
 	var out bytes.Buffer
 	cmd := New(Config{
