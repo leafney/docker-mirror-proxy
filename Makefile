@@ -1,4 +1,4 @@
-BINARY ?= dmp
+BINARY ?= ./bin/dmp
 PACKAGE := ./cmd/dmp
 CGO_ENABLED ?= 0
 
