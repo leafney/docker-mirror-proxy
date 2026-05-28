@@ -62,6 +62,7 @@ func New(cfg Config) *cobra.Command {
 
 func newPullCommand(out io.Writer) *cobra.Command {
 	var timeoutSeconds int
+	var maxTimeSeconds int
 
 	cmd := &cobra.Command{
 		Use:   "pull <镜像> [镜像...]",
@@ -71,15 +72,20 @@ func newPullCommand(out io.Writer) *cobra.Command {
 			if timeoutSeconds <= 0 {
 				return fmt.Errorf("--timeout 必须大于 0")
 			}
+			if maxTimeSeconds < 0 {
+				return fmt.Errorf("--max-time 不能小于 0")
+			}
 			return app.Run(cmd.Context(), app.Options{
 				Images:  args,
 				Timeout: time.Duration(timeoutSeconds) * time.Second,
+				MaxTime: time.Duration(maxTimeSeconds) * time.Second,
 				Out:     out,
 			})
 		},
 	}
 
-	cmd.Flags().IntVarP(&timeoutSeconds, "timeout", "t", 60, "单个加速地址的超时时间，单位为秒")
+	cmd.Flags().IntVarP(&timeoutSeconds, "timeout", "t", 60, "单个加速地址的无进展超时时间，单位为秒")
+	cmd.Flags().IntVarP(&maxTimeSeconds, "max-time", "m", 0, "单个加速地址的总耗时上限，单位为秒，0 表示不限制")
 	return cmd
 }
 
