@@ -43,28 +43,24 @@ dmp pull --timeout 60 --max-time 1800 rabbitmq:4.3.1-management
 [dmp] 镜像类型: ghcr
 [dmp] 无进展超时时间: 60 秒
 [dmp] 单个加速地址总耗时上限: 不限制
-[dmp] 候选加速地址数量: 4
-[dmp] 尝试 1/4: docker.1ms.run/ghcr.io/leafney/ai-signin:0.6.11
-Error response from daemon: manifest for docker.1ms.run/ghcr.io/leafney/ai-signin:0.6.11 not found: manifest unknown: 没有找到该资源，请检查镜像名称或者版本(tag)是否真实存在！(例如：拼写错误? 没有指定版本[tag]? 版本错误? AI胡诌?) 欢迎联系我们获得帮助 QQ群：1102523830
+[dmp] 候选加速地址数量: 3
+[dmp] 尝试 1/3: ghcr.1ms.run/leafney/ai-signin:0.6.11
+Error response from daemon: manifest for ghcr.1ms.run/leafney/ai-signin:0.6.11 not found: manifest unknown
 [dmp] 拉取失败，切换下一个加速地址
-[dmp] 尝试 2/4: dockerproxy.net/ghcr.io/leafney/ai-signin:0.6.11
-Error response from daemon: manifest for dockerproxy.net/ghcr.io/leafney/ai-signin:0.6.11 not found: manifest unknown: manifest unknown
+[dmp] 尝试 2/3: dockerproxy.net/ghcr.io/leafney/ai-signin:0.6.11
+Error response from daemon: manifest for dockerproxy.net/ghcr.io/leafney/ai-signin:0.6.11 not found: manifest unknown
 [dmp] 拉取失败，切换下一个加速地址
-[dmp] 尝试 3/4: proxy.vvvv.ee/ghcr.io/leafney/ai-signin:0.6.11
-0.6.11: Pulling from ghcr.io/leafney/ai-signin
+[dmp] 尝试 3/3: ghcr.io/leafney/ai-signin:0.6.11
+0.6.11: Pulling from leafney/ai-signin
 9b02e9fcb401: Pull complete 
 d5babde5a207: Pull complete 
 cf70f8595b3a: Pull complete 
 bed64e9fefb7: Pull complete 
 80d6ec238cdb: Pull complete 
 Digest: sha256:d36187befddf7a8e0f01ce8da06d453c7f534bea713960e1a075a0cbfea02fa4
-Status: Downloaded newer image for proxy.vvvv.ee/ghcr.io/leafney/ai-signin:0.6.11
-proxy.vvvv.ee/ghcr.io/leafney/ai-signin:0.6.11
-[dmp] 拉取成功: proxy.vvvv.ee/ghcr.io/leafney/ai-signin:0.6.11
-[dmp] 打标签: proxy.vvvv.ee/ghcr.io/leafney/ai-signin:0.6.11 -> ghcr.io/leafney/ai-signin:0.6.11
-[dmp] 清理临时标签: proxy.vvvv.ee/ghcr.io/leafney/ai-signin:0.6.11
-Untagged: proxy.vvvv.ee/ghcr.io/leafney/ai-signin:0.6.11
-Untagged: proxy.vvvv.ee/ghcr.io/leafney/ai-signin@sha256:d36187befddf7a8e0f01ce8da06d453c7f534bea713960e1a075a0cbfea02fa4
+Status: Downloaded newer image for ghcr.io/leafney/ai-signin:0.6.11
+ghcr.io/leafney/ai-signin:0.6.11
+[dmp] 拉取成功: ghcr.io/leafney/ai-signin:0.6.11
 [dmp] 完成: ghcr.io/leafney/ai-signin:0.6.11
 ```
 

@@ -17,8 +17,7 @@ func TestCandidatesForDockerHubOfficialImage(t *testing.T) {
 	want := []string{
 		"docker.1ms.run/nginx:latest",
 		"dockerproxy.net/nginx:latest",
-		"proxy.vvvv.ee/nginx:latest",
-		"registry.cyou/nginx:latest",
+		"docker.io/nginx:latest",
 	}
 
 	if !reflect.DeepEqual(got, want) {
@@ -36,8 +35,7 @@ func TestCandidatesForDockerHubNamespaceImage(t *testing.T) {
 	want := []string{
 		"docker.1ms.run/lexiforest/curl-impersonate:latest",
 		"dockerproxy.net/lexiforest/curl-impersonate:latest",
-		"proxy.vvvv.ee/lexiforest/curl-impersonate:latest",
-		"registry.cyou/lexiforest/curl-impersonate:latest",
+		"docker.io/lexiforest/curl-impersonate:latest",
 	}
 
 	if !reflect.DeepEqual(got, want) {
@@ -53,10 +51,9 @@ func TestCandidatesForGHCRImage(t *testing.T) {
 
 	got := Candidates(ref)
 	want := []string{
-		"docker.1ms.run/ghcr.io/leafney/ai-signin:0.6.8",
+		"ghcr.1ms.run/leafney/ai-signin:0.6.8",
 		"dockerproxy.net/ghcr.io/leafney/ai-signin:0.6.8",
-		"proxy.vvvv.ee/ghcr.io/leafney/ai-signin:0.6.8",
-		"registry.cyou/ghcr.io/leafney/ai-signin:0.6.8",
+		"ghcr.io/leafney/ai-signin:0.6.8",
 	}
 
 	if !reflect.DeepEqual(got, want) {
