@@ -19,6 +19,29 @@
 - `-t, --timeout int` 单个加速地址的无进展超时时间，单位为秒，默认 60
 - `-m, --max-time int` 单个加速地址的总耗时上限，单位为秒，默认 0，表示不限制
 
+### Docker daemon 代理配置
+
+`pull proxy` 命令用于管理 Linux systemd 环境下的 Docker daemon 代理配置。第一版仅支持 Linux systemd amd64/arm64，其他系统会提示暂不支持。
+
+```bash
+# 写入 Docker daemon 代理配置并重启 Docker 服务
+sudo dmp pull proxy set 192.168.8.100:7890
+
+# 移除 dmp 写入的 Docker daemon 代理配置并重启 Docker 服务
+sudo dmp pull proxy rm
+
+# 查看当前代理配置，并通过 systemctl show 和 curl -x 验证
+dmp pull proxy sts
+```
+
+`set` 会管理以下专属配置文件，不会修改用户手写的其他 Docker systemd 配置：
+
+```text
+/etc/systemd/system/docker.service.d/dmp-http-proxy.conf
+```
+
+如果代理地址没有协议，命令会自动补 `http://`。例如 `192.168.8.100:7890` 会写入为 `http://192.168.8.100:7890`。`socks5://` 地址会被拒绝。
+
 ### 使用方式
 
 ```bash

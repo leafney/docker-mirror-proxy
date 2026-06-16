@@ -179,6 +179,65 @@ func TestPullCommandRejectsNoCleanFlag(t *testing.T) {
 	}
 }
 
+func TestPullProxyCommandRequiresSubcommand(t *testing.T) {
+	var out bytes.Buffer
+	cmd := New(Config{
+		Version: "test",
+		Out:     &out,
+		Err:     &out,
+	})
+	cmd.SetArgs([]string{"pull", "proxy"})
+
+	if err := cmd.ExecuteContext(context.Background()); err != nil {
+		t.Fatalf("ExecuteContext returned error: %v", err)
+	}
+	if !strings.Contains(out.String(), "set") || !strings.Contains(out.String(), "rm") || !strings.Contains(out.String(), "sts") {
+		t.Fatalf("proxy help missing subcommands: %s", out.String())
+	}
+}
+
+func TestPullProxySetRequiresProxyArgument(t *testing.T) {
+	var out bytes.Buffer
+	cmd := New(Config{
+		Version: "test",
+		Out:     &out,
+		Err:     &out,
+	})
+	cmd.SetArgs([]string{"pull", "proxy", "set"})
+
+	if err := cmd.ExecuteContext(context.Background()); err == nil {
+		t.Fatal("ExecuteContext returned nil error")
+	}
+}
+
+func TestPullProxyRmRejectsArguments(t *testing.T) {
+	var out bytes.Buffer
+	cmd := New(Config{
+		Version: "test",
+		Out:     &out,
+		Err:     &out,
+	})
+	cmd.SetArgs([]string{"pull", "proxy", "rm", "extra"})
+
+	if err := cmd.ExecuteContext(context.Background()); err == nil {
+		t.Fatal("ExecuteContext returned nil error")
+	}
+}
+
+func TestPullProxyStsRejectsArguments(t *testing.T) {
+	var out bytes.Buffer
+	cmd := New(Config{
+		Version: "test",
+		Out:     &out,
+		Err:     &out,
+	})
+	cmd.SetArgs([]string{"pull", "proxy", "sts", "extra"})
+
+	if err := cmd.ExecuteContext(context.Background()); err == nil {
+		t.Fatal("ExecuteContext returned nil error")
+	}
+}
+
 func TestGhCommandSupportsProxyFlag(t *testing.T) {
 	var out bytes.Buffer
 	cmd := New(Config{
