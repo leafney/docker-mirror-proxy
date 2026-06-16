@@ -83,6 +83,7 @@ func (s *Service) Set(ctx context.Context, rawProxy string) error {
 	}
 
 	s.log("代理地址: %s", proxy)
+	s.blankLine()
 	s.log("将写入 Docker daemon 代理配置: %s", s.configPath())
 	if err := os.MkdirAll(s.ConfigDir, 0o755); err != nil {
 		s.log("创建配置目录失败: %v", err)
@@ -97,6 +98,7 @@ func (s *Service) Set(ctx context.Context, rawProxy string) error {
 		return err
 	}
 	s.log("代理配置写入完成")
+	s.blankLine()
 
 	s.log("将重新加载 systemd 并重启 Docker 服务，正在运行的容器可能短暂受影响")
 	if err := s.reloadAndRestart(ctx); err != nil {
@@ -129,6 +131,7 @@ func (s *Service) Remove(ctx context.Context) error {
 		s.log("请使用管理员权限重新执行: sudo dmp pull proxy rm")
 		return err
 	}
+	s.blankLine()
 
 	s.log("将重新加载 systemd 并重启 Docker 服务，正在运行的容器可能短暂受影响")
 	if err := s.reloadAndRestart(ctx); err != nil {
@@ -233,6 +236,7 @@ func (s *Service) reloadAndRestart(ctx context.Context) error {
 		s.log("请手动执行: sudo systemctl daemon-reload")
 		return err
 	}
+	s.blankLine()
 	if err := s.runStep(ctx, "重启 Docker 服务", "systemctl", "restart", "docker"); err != nil {
 		s.log("请手动执行: sudo systemctl restart docker")
 		return err
@@ -324,4 +328,11 @@ func (s *Service) log(format string, args ...any) {
 		return
 	}
 	fmt.Fprintf(s.Out, "[dmp] "+format+"\n", args...)
+}
+
+func (s *Service) blankLine() {
+	if s.Out == nil {
+		return
+	}
+	fmt.Fprintln(s.Out)
 }

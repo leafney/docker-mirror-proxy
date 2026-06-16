@@ -126,6 +126,15 @@ func TestSetWritesConfigAndRestartsDocker(t *testing.T) {
 	if !strings.Contains(out.String(), "将重新加载 systemd 并重启 Docker 服务") {
 		t.Fatalf("output missing restart warning: %s", out.String())
 	}
+	for _, want := range []string{
+		"代理地址: http://192.168.8.100:7890\n\n[dmp] 将写入 Docker daemon 代理配置",
+		"代理配置写入完成\n\n[dmp] 将重新加载 systemd",
+		"重新加载 systemd\n\n[dmp] 重启 Docker 服务",
+	} {
+		if !strings.Contains(out.String(), want) {
+			t.Fatalf("output missing blank line %q: %s", want, out.String())
+		}
+	}
 }
 
 func TestRemoveDoesNothingWhenConfigMissing(t *testing.T) {
