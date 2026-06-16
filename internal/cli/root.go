@@ -9,6 +9,7 @@ import (
 
 	"github.com/leafney/docker-mirror-proxy/internal/app"
 	"github.com/leafney/docker-mirror-proxy/internal/ghapp"
+	"github.com/leafney/docker-mirror-proxy/internal/pullproxy"
 	"github.com/spf13/cobra"
 )
 
@@ -86,6 +87,57 @@ func newPullCommand(out io.Writer) *cobra.Command {
 
 	cmd.Flags().IntVarP(&timeoutSeconds, "timeout", "t", 60, "单个加速地址的无进展超时时间，单位为秒")
 	cmd.Flags().IntVarP(&maxTimeSeconds, "max-time", "m", 0, "单个加速地址的总耗时上限，单位为秒，0 表示不限制")
+	cmd.AddCommand(newPullProxyCommand(out))
+	return cmd
+}
+
+func newPullProxyCommand(out io.Writer) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "proxy",
+		Short: "管理 Docker daemon 代理配置",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cmd.Help()
+		},
+	}
+	cmd.AddCommand(newPullProxySetCommand(out))
+	cmd.AddCommand(newPullProxyRmCommand(out))
+	cmd.AddCommand(newPullProxyStsCommand(out))
+	return cmd
+}
+
+func newPullProxySetCommand(out io.Writer) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "set <proxy>",
+		Short: "设置 Docker daemon 代理",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return pullproxy.New(out).Set(cmd.Context(), args[0])
+		},
+	}
+	return cmd
+}
+
+func newPullProxyRmCommand(out io.Writer) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "rm",
+		Short: "移除 Docker daemon 代理",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return pullproxy.New(out).Remove(cmd.Context())
+		},
+	}
+	return cmd
+}
+
+func newPullProxyStsCommand(out io.Writer) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "sts",
+		Short: "查看 Docker daemon 代理状态",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return pullproxy.New(out).Status(cmd.Context())
+		},
+	}
 	return cmd
 }
 
