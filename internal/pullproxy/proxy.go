@@ -160,14 +160,13 @@ func (s *Service) Status(ctx context.Context) error {
 	} else {
 		s.log("发现 dmp 代理配置: %s", proxy)
 	}
+	s.blankLine()
 
 	showCmd := "systemctl show --property=Environment docker"
 	s.log("执行验证命令: %s", showCmd)
 	showOut, showErr := s.runner().Run(ctx, "systemctl", "show", "--property=Environment", "docker")
-	if strings.TrimSpace(showOut) != "" {
-		for _, line := range strings.Split(strings.TrimRight(showOut, "\n"), "\n") {
-			s.log("%s", line)
-		}
+	for _, line := range formatDockerEnvironment(showOut) {
+		s.log("%s", line)
 	}
 	if showErr != nil {
 		s.log("systemctl 验证失败: %v", showErr)
@@ -185,19 +184,16 @@ func (s *Service) Status(ctx context.Context) error {
 		return nil
 	}
 
-	curlArgs := []string{"-x", proxy, RegistryCheckURL, "-I"}
+	s.blankLine()
+	curlArgs := []string{"-sS", "-x", proxy, RegistryCheckURL, "-I"}
 	s.log("执行验证命令: curl %s", strings.Join(curlArgs, " "))
-	curlOut, curlErr := s.runner().Run(ctx, "curl", curlArgs...)
-	if strings.TrimSpace(curlOut) != "" {
-		for _, line := range strings.Split(strings.TrimRight(curlOut, "\n"), "\n") {
-			s.log("%s", line)
-		}
-	}
+	_, curlErr := s.runner().Run(ctx, "curl", curlArgs...)
 	if curlErr != nil {
-		s.log("代理连通性验证失败: %v", curlErr)
+		s.log("代理连通性验证结果: fail")
+		s.log("失败原因: %v", curlErr)
 		return curlErr
 	}
-	s.log("代理连通性验证成功")
+	s.log("代理连通性验证结果: success")
 	s.log("完成")
 	return nil
 }
@@ -289,6 +285,52 @@ func ParseProxyConfig(content string) string {
 		}
 	}
 	return ""
+}
+
+func formatDockerEnvironment(output string) []string {
+	output = strings.TrimSpace(output)
+	if output == "" {
+		return nil
+	}
+	output = strings.TrimPrefix(output, "Environment=")
+	fields := splitEnvironmentFields(output)
+	if len(fields) == 0 {
+		return []string{"Environment="}
+	}
+	lines := make([]string, 0, len(fields)+1)
+	lines = append(lines, "Environment:")
+	for _, field := range fields {
+		lines = append(lines, "  "+strings.Trim(field, `"`))
+	}
+	return lines
+}
+
+func splitEnvironmentFields(value string) []string {
+	var fields []string
+	var b strings.Builder
+	inQuote := false
+	for _, r := range value {
+		switch r {
+		case '"':
+			inQuote = !inQuote
+			b.WriteRune(r)
+		case ' ', '\n', '\t':
+			if inQuote {
+				b.WriteRune(r)
+				continue
+			}
+			if strings.TrimSpace(b.String()) != "" {
+				fields = append(fields, strings.TrimSpace(b.String()))
+				b.Reset()
+			}
+		default:
+			b.WriteRune(r)
+		}
+	}
+	if strings.TrimSpace(b.String()) != "" {
+		fields = append(fields, strings.TrimSpace(b.String()))
+	}
+	return fields
 }
 
 func (s *Service) configPath() string {

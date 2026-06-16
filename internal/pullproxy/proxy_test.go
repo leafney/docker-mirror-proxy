@@ -182,8 +182,8 @@ func TestStatusRunsSystemctlAndCurl(t *testing.T) {
 	proxy := "http://192.168.8.100:7890"
 	runner := &fakeRunner{
 		outputs: map[string]string{
-			commandKey("systemctl", "show", "--property=Environment", "docker"): "Environment=HTTP_PROXY=" + proxy + " HTTPS_PROXY=" + proxy + "\n",
-			commandKey("curl", "-x", proxy, RegistryCheckURL, "-I"):             "HTTP/2 401\n",
+			commandKey("systemctl", "show", "--property=Environment", "docker"): "Environment=HTTP_PROXY=" + proxy + " HTTPS_PROXY=" + proxy + " \"NO_PROXY=localhost,127.0.0.1\"\n",
+			commandKey("curl", "-sS", "-x", proxy, RegistryCheckURL, "-I"):      "HTTP/2 401\n",
 		},
 		errors: map[string]error{},
 	}
@@ -200,13 +200,67 @@ func TestStatusRunsSystemctlAndCurl(t *testing.T) {
 	}
 	wantCalls := []runnerCall{
 		{Name: "systemctl", Args: []string{"show", "--property=Environment", "docker"}},
-		{Name: "curl", Args: []string{"-x", proxy, RegistryCheckURL, "-I"}},
+		{Name: "curl", Args: []string{"-sS", "-x", proxy, RegistryCheckURL, "-I"}},
 	}
 	if !reflect.DeepEqual(runner.calls, wantCalls) {
 		t.Fatalf("calls = %#v, want %#v", runner.calls, wantCalls)
 	}
-	if !strings.Contains(out.String(), "代理连通性验证成功") {
-		t.Fatalf("output missing success: %s", out.String())
+	for _, want := range []string{
+		"发现 dmp 代理配置: " + proxy + "\n\n[dmp] 执行验证命令: systemctl",
+		"Environment:\n[dmp]   HTTP_PROXY=" + proxy + "\n[dmp]   HTTPS_PROXY=" + proxy + "\n[dmp]   NO_PROXY=localhost,127.0.0.1",
+		"Docker 服务已加载 dmp 代理地址\n\n[dmp] 执行验证命令: curl -sS -x " + proxy,
+		"代理连通性验证结果: success",
+	} {
+		if !strings.Contains(out.String(), want) {
+			t.Fatalf("output missing %q: %s", want, out.String())
+		}
+	}
+	if strings.Contains(out.String(), "HTTP/2 401") {
+		t.Fatalf("curl output should be hidden: %s", out.String())
+	}
+}
+
+func TestFormatDockerEnvironment(t *testing.T) {
+	proxy := "http://192.168.150.75:57890"
+	got := formatDockerEnvironment("Environment=HTTP_PROXY=" + proxy + " HTTPS_PROXY=" + proxy + " \"NO_PROXY=localhost,127.0.0.1,::1\"\n")
+	want := []string{
+		"Environment:",
+		"  HTTP_PROXY=" + proxy,
+		"  HTTPS_PROXY=" + proxy,
+		"  NO_PROXY=localhost,127.0.0.1,::1",
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("formatDockerEnvironment = %#v, want %#v", got, want)
+	}
+}
+
+func TestStatusReportsCurlFailureWithoutCurlOutput(t *testing.T) {
+	proxy := "http://192.168.8.100:7890"
+	runner := &fakeRunner{
+		outputs: map[string]string{
+			commandKey("systemctl", "show", "--property=Environment", "docker"): "Environment=HTTP_PROXY=" + proxy + "\n",
+			commandKey("curl", "-sS", "-x", proxy, RegistryCheckURL, "-I"):      "curl noise\n",
+		},
+		errors: map[string]error{
+			commandKey("curl", "-sS", "-x", proxy, RegistryCheckURL, "-I"): errors.New("curl failed"),
+		},
+	}
+	svc, out := newTestService(t, runner)
+	if err := os.MkdirAll(svc.ConfigDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(svc.ConfigDir, DefaultConfigFile), []byte(RenderConfig(proxy, DefaultNoProxy)), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := svc.Status(context.Background()); err == nil {
+		t.Fatal("Status returned nil error")
+	}
+	if !strings.Contains(out.String(), "代理连通性验证结果: fail") {
+		t.Fatalf("output missing fail result: %s", out.String())
+	}
+	if strings.Contains(out.String(), "curl noise") {
+		t.Fatalf("curl output should be hidden: %s", out.String())
 	}
 }
 
